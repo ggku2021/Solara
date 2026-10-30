@@ -399,6 +399,10 @@ function buildAudioProxyUrl(url) {
             return parsedUrl.toString();
         }
 
+        // Legacy-only guard: only http kuwo.cn audio goes through /proxy?target=.
+        // netease / joox audio URLs are intentionally NOT proxied here,
+        // so they keep their original (https) address and do not hit the kuwo
+        // Referer/Range handling in functions/proxy.ts.
         if (parsedUrl.protocol === "http:" && /(^|\.)kuwo\.cn$/i.test(parsedUrl.hostname)) {
             return `${API.baseUrl}?target=${encodeURIComponent(parsedUrl.toString())}`;
         }
@@ -412,7 +416,6 @@ function buildAudioProxyUrl(url) {
 
 const SOURCE_OPTIONS = [
     { value: "netease", label: "网易云音乐" },
-    { value: "kuwo", label: "酷我音乐" },
     { value: "joox", label: "JOOX音乐" }
 ];
 
