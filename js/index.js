@@ -28,6 +28,7 @@ const dom = {
     currentSongTitle: document.getElementById("currentSongTitle"),
     currentSongArtist: document.getElementById("currentSongArtist"),
     debugInfo: document.getElementById("debugInfo"),
+    selectAllSearchResultsBtn: document.getElementById("selectAllSearchResultsBtn"),
     importSelectedBtn: document.getElementById("importSelectedBtn"),
     importSelectedCount: document.getElementById("importSelectedCount"),
     importPlaylistBtn: document.getElementById("importPlaylistBtn"),
@@ -2375,6 +2376,13 @@ function setupInteractions() {
     });
 
     updateImportSelectedButton();
+    if (dom.selectAllSearchResultsBtn) {
+        dom.selectAllSearchResultsBtn.addEventListener("click", (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            toggleSelectAllSearchResults();
+        });
+    }
     if (dom.importSelectedBtn) {
         dom.importSelectedBtn.addEventListener("click", (event) => {
             event.preventDefault();
@@ -2874,6 +2882,43 @@ function updateImportSelectedButton() {
     const label = count > 0 ? `导入已选 (${count})` : "导入已选";
     button.title = label;
     button.setAttribute("aria-label", count > 0 ? `导入已选 ${count} 首歌曲` : "导入已选");
+    updateSelectAllSearchResultsButton();
+}
+
+function updateSelectAllSearchResultsButton() {
+    const button = dom.selectAllSearchResultsBtn;
+    if (!button) {
+        return;
+    }
+    ensureSelectedSearchResultsSet();
+    const total = Array.isArray(state.searchResults) ? state.searchResults.length : 0;
+    const allSelected = total > 0 && state.selectedSearchResults.size === total;
+    button.disabled = total === 0;
+    button.setAttribute("aria-disabled", total === 0 ? "true" : "false");
+    const label = button.querySelector(".select-all-label");
+    if (label) {
+        label.textContent = allSelected ? "取消全选" : "全选";
+    }
+    const text = allSelected ? "取消全选" : "全选";
+    button.title = total > 0 ? `${text}（共 ${total} 首）` : "全选";
+    button.setAttribute("aria-label", total > 0 ? `${text}搜索结果，共 ${total} 首` : "全选搜索结果");
+}
+
+function toggleSelectAllSearchResults() {
+    ensureSelectedSearchResultsSet();
+    const total = Array.isArray(state.searchResults) ? state.searchResults.length : 0;
+    if (total === 0) {
+        return;
+    }
+    if (state.selectedSearchResults.size === total) {
+        resetSelectedSearchResults();
+        return;
+    }
+    for (let index = 0; index < total; index++) {
+        state.selectedSearchResults.add(index);
+        updateSearchResultSelectionUI(index);
+    }
+    updateImportSelectedButton();
 }
 
 function toggleSearchResultSelection(index) {
@@ -3026,6 +3071,7 @@ function displaySearchResults(newItems, options = {}) {
     const appendedCount = itemsToAppend.length;
     const totalRendered = state.renderedSearchCount;
     debugLog(`显示搜索结果: 新增 ${appendedCount} 个结果, 总计 ${totalRendered} 个, 加载更多按钮: ${state.hasMoreResults ? "显示" : "隐藏"}`);
+    updateSelectAllSearchResultsButton();
 }
 
 // 显示质量选择菜单
