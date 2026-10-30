@@ -809,10 +809,16 @@ body.mobile-view .search-results-toolbar {
     width: min(100%, 340px);
     margin: 0 auto;
     padding-top: 8px;
+    flex-wrap: wrap;
 }
 
 body.mobile-view .import-selected-btn {
-    width: 100%;
+    flex: 1;
+    justify-content: center;
+}
+
+body.mobile-view .select-all-btn {
+    flex: 1;
     justify-content: center;
 }
 

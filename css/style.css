@@ -593,6 +593,39 @@ body.background-transitioning .background-stage__layer--transition {
     font-weight: 500;
 }
 
+.select-all-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.65);
+    color: var(--text-color);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.select-all-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+    box-shadow: none;
+}
+
+.select-all-btn:not(:disabled):hover,
+.select-all-btn:not(:disabled):focus-visible {
+    transform: translateY(-1px);
+    border-color: var(--primary-color);
+    box-shadow: 0 10px 24px rgba(26, 188, 156, 0.25);
+}
+
+.select-all-btn:focus-visible {
+    outline: none;
+}
+
 .action-btn {
     background: var(--primary-color);
     color: white;
