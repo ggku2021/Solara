@@ -18,6 +18,16 @@ function createCorsHeaders(init?: Headers): Headers {
   return headers;
 }
 
+function upstreamErrorResponse(error: unknown): Response {
+  const detail = error instanceof Error ? error.message : String(error);
+  const headers = createCorsHeaders();
+  headers.set("Content-Type", "application/json; charset=utf-8");
+  return new Response(JSON.stringify({ error: "Upstream request failed", detail }), {
+    status: 502,
+    headers,
+  });
+}
+
 function handleOptions(): Response {
   return new Response(null, {
     status: 204,
@@ -70,17 +80,21 @@ async function proxyKuwoAudio(targetUrl: string, request: Request): Promise<Resp
     (init.headers as Record<string, string>)["Range"] = rangeHeader;
   }
 
-  const upstream = await fetch(normalized.toString(), init);
-  const headers = createCorsHeaders(upstream.headers);
-  if (!headers.has("Cache-Control")) {
-    headers.set("Cache-Control", "public, max-age=3600");
-  }
+  try {
+    const upstream = await fetch(normalized.toString(), init);
+    const headers = createCorsHeaders(upstream.headers);
+    if (!headers.has("Cache-Control")) {
+      headers.set("Cache-Control", "public, max-age=3600");
+    }
 
-  return new Response(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers,
-  });
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers,
+    });
+  } catch (error) {
+    return upstreamErrorResponse(error);
+  }
 }
 
 async function proxyApiRequest(url: URL, request: Request): Promise<Response> {
@@ -96,23 +110,27 @@ async function proxyApiRequest(url: URL, request: Request): Promise<Response> {
     return new Response("Missing types", { status: 400 });
   }
 
-  const upstream = await fetch(apiUrl.toString(), {
-    headers: {
-      "User-Agent": request.headers.get("User-Agent") ?? "Mozilla/5.0",
-      "Accept": "application/json",
-    },
-  });
+  try {
+    const upstream = await fetch(apiUrl.toString(), {
+      headers: {
+        "User-Agent": request.headers.get("User-Agent") ?? "Mozilla/5.0",
+        "Accept": "application/json",
+      },
+    });
 
-  const headers = createCorsHeaders(upstream.headers);
-  if (!headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json; charset=utf-8");
+    const headers = createCorsHeaders(upstream.headers);
+    if (!headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json; charset=utf-8");
+    }
+
+    return new Response(upstream.body, {
+      status: upstream.status,
+      statusText: upstream.statusText,
+      headers,
+    });
+  } catch (error) {
+    return upstreamErrorResponse(error);
   }
-
-  return new Response(upstream.body, {
-    status: upstream.status,
-    statusText: upstream.statusText,
-    headers,
-  });
 }
 
 export async function onRequest({ request }: { request: Request }): Promise<Response> {
